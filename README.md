@@ -12,12 +12,12 @@ git clone https://github.com/singham007/raspberrypi-remote-omxplayer.git
 ```
 cd raspberrypi-remote-omxplayer
 ```
-* Install by- ( Make sure you have [node](https://nodejs.org/) , [npm](https://docs.npmjs.com/getting-started/installing-node) & [bower] (http://bower.io/) installed.)
-```
-npm install
-bower -g install
-```
 * Open config.json and Enter your Music Directory where songs are stored .
+```
+{
+	"MusicDirectory":""
+}
+```
 * Run by -
 ```
 node player.js
