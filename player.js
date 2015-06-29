@@ -16,8 +16,9 @@ var omx = require('omx-manager'),
 
 
 
-var playNext = true, songsDir = config.MusicDirectory, songs = []/*Playlist*/, currentSong = 0,dispSongs = [];
+var  songsDir = config.MusicDirectory, songs = []/*Playlist*/, currentSong = 0,dispSongs = [] ,songDuration =[];
 
+(songsDir[songsDir.length-1] !== '/') ? songsDir+'/' : songsDir ;
 
 
  exec('killall -9 omxplayer.bin');
@@ -35,6 +36,8 @@ function getUsbDevice(){
 	});
 
 }
+
+
 
 /*
 var mkdirSync = function (path) {
@@ -87,10 +90,11 @@ function isMp3(mp3Src) { //Validate mp3 file
 
 console.log(' ' + songs.length.toString().yellow + ' Songs Found : \n'.green);
 
-
 	for(var k=0;k<songs.length;k++){
+		
 		dispSongs[k] = songs[k].replace(songsDir,'').replace('.mp3','');
 		}
+
 
 displayPlaylist();
 
@@ -104,13 +108,83 @@ function displayPlaylist(){
 	});
 }
 
+var getSongDuration = function  (song, callback) {
+
+  exec('omxplayer -i ' + '"' +song + '"', function (err, stdout, stderr) {
+    if (!err) {
+      var duration = /(Duration:\s)([\d.:]+)/g.exec(stderr);
+      if (duration) {
+        var durationArray = duration[2].split(':');
+        var miliseconds = Math.ceil(durationArray[0]) * 60 * 60 * 1000 + Math.ceil(+durationArray[1]) * 60 * 1000 + durationArray[2] * 1000;
+        callback(miliseconds);
+      } else {
+        // couldn't find duration for some reason
+        callback(null);
+      }
+    } else {
+      callback(null);
+    }
+  });
+};
+
+console.log('Scanning Please wait...'.red);
+setDuration(0);
+
+function setDuration(a){
+
+
+	if(a < songs.length){
+			getSongDuration ( songs[a], function(msec){
+			songDuration[a]=msec -2000;
+			setDuration(a+1);
+		});
+	}else console.log('Scan Completed :)'.red)
+}
+
+
+function continuosPlaybackHandler(){
+
+		if(songDuration[currentSong]){
+			timeOuts.push(setTimeout(function(){
+					playSong(currentSong+1);
+					console.log('timoutstop');
+				},songDuration[currentSong]));
+
+			console.log('Timeoutset ' + songDuration[currentSong]);
+			clearExtraTimeOuts();
+		}else console.log('ERR : Duration of song not found')
+
+}
+
+
+function clearExtraTimeOuts(){
+	if(timeOuts.length > 1){
+		clearTimeout(timeOuts.pop());
+		console.log('extracleared');
+		clearExtraTimeOuts();
+		}
+	}
+
+
+ 
+
+omx.stop();
+var timeOuts = []; // To handle Timeout intervals at end of song
+
 
 function playSong(i) { // Play song of index currentSong from songs[]
+
+	if(timeOuts[0]) {
+		clearTimeout(timeOuts[0]);
+		timeOuts.pop();
+		console.log('cleared');
+	}
+
 
 
 	if(currentSong<0 || currentSong>songs.length-1 ) {
 		console.log('ERR: Plz enter valid song number'.red);
-		return;
+		return false;
 	}else{
 		currentSong = i;
 	}
@@ -121,39 +195,32 @@ function playSong(i) { // Play song of index currentSong from songs[]
 	else {
 		omx.play(songs[currentSong]);
 		console.log('Now Playing: '.red + dispSongs[currentSong].yellow);
+
+		continuosPlaybackHandler();
+		
 	}
 
-	omx.once('stop', function(){
 
-		omx.removeListener('end', function(){});
-		if(playNext) {
-			currentSong=currentSong+1;
-			omx.play(songs[currentSong]);
-		}
-		else omx.play(songs[currentSong]);
+	omx.once('songended', function(){
+		
 
-		console.log('stop');
-		console.log('Now Playing: '.red + dispSongs[currentSong].yellow);
-		playNext=true;
-    
-	});
+		omx.play(songs[currentSong]);
+		continuosPlaybackHandler();
 
-	omx.once('end', function(){
-		omx.removeListener('stop', function(){});
-		if(playNext) {
-			currentSong=currentSong+1;
-			omx.play(songs[currentSong]);
-		}
-		else omx.play(songs[currentSong]);
 
 		console.log('end');
 		console.log('Now Playing: '.red + dispSongs[currentSong].yellow);
-		playNext=true;
-    
+
+		
 	});
+
+return true;
+
+
 
 
 }
+
 
 
 ///////// Command Line options////////
@@ -224,7 +291,7 @@ function resume(){
 
 function play(line){
 
-	playNext=false;
+
 	line = line.replace('play','');
 	if(line) {
 		try {
@@ -242,7 +309,7 @@ function play(line){
 
 function prev(){
 
-	playNext=false;
+
 	if(currentSong > 0) {
 		playSong(currentSong-1);
 
@@ -255,7 +322,7 @@ function prev(){
 }
 
 function next(){
-	playNext=false;
+
 
 	if(currentSong < songs.length -1 ) playSong(currentSong+1);
 	else playSong(0);
@@ -268,12 +335,7 @@ function stopApp(){
 }
 
 function setVolume(volume){
-var args = ['-D', 'pulse', 'sset','Master',volume+'%'],
-childProc = cp.spawn('amixer', args);
-setVolumerl = readline.createInterface({
-            input: childProc.stdout,
-            output:childProc.stdin
-        });
+
 }
 
 function seek(sec){
@@ -285,25 +347,17 @@ function seek(sec){
 /////////////// Express ////////////
 
 
- app.use(express.static(__dirname + '/public'));                 // set the static files location /public/img will be /img for users
+ app.use(express.static(__dirname + '/public'));                 
 
 
-    app.listen(8080);
-    console.log("App listening on port 8080");
+    app.listen(8081);
 
 
     app.get('/play/:song_no', function(req, res) {
 
-      function sync(plays,callback){
-        playNext=false;
-        plays;
-        callback;
-      }
-      sync(
-    	playSong(req.params.song_no - 1),
-    	res.send(JSON.stringify({'song':currentSong+1 , 'action':'play'}))
-          );
 
+    	if(playSong(req.params.song_no - 1)) res.send(JSON.stringify({'song':currentSong+1 , 'action':'play'}));
+          else res.send(JSON.stringify({'song':currentSong+1 , 'action':'err'}));
     });
 
 
