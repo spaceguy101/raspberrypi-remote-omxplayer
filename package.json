@@ -1,0 +1,16 @@
+{
+  "name": "node-mplayer-web",
+  "version": "0.0.1",
+  "description": "Node.js MPlayer Wrapper",
+  "main": "player.js",
+   "dependencies" 	: {
+   	"omxdirector"	:"latest",
+    "read-chunk"	: "~1.0.1",
+    "file-type"		: "~2.7.0",
+    "colors"	  	: "~1.1.2",
+    "express"   	: "~4.9.8"
+    },
+  "author": "shreyas101",
+  "license": "MIT"
+}
+

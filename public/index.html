@@ -1,0 +1,55 @@
+
+<!-- public/index.html -->
+<!doctype html>
+<html lang="en">
+<head>
+<style>
+body{
+overflow:scroll;
+height: 640px;
+width:480px;
+font:15px;
+}
+</style>
+    <meta charset="UTF-8">
+    <base href="/">
+
+    <title> Node Web Mplayer</title>
+
+
+    <!-- JS -->
+    <script src="libs/angular/angular.min.js"></script>
+    <script src="libs/angular-route/angular-route.min.js"></script>
+    <script src="libs/jquery/dist/jquery.min.js"></script>
+
+    <script src="app.js"></script>
+</head>
+<body ng-app="App" ng-controller="PlayerController">
+<div class="container">
+
+
+
+    <div class="playlist">
+        <h1> Node Web Player</h1>
+        <nav>
+          <button class="control play" ng-click="play()" >Play</button>
+          <button class="control pause" ng-click="pause()">Pause/Resume</button>
+          <button class="control prev" ng-click="prev()">Prev</button>
+          <button class="control next" ng-click="next()">Next</button>
+        </nav>
+
+        </br> SetVolume (%) : <input type="text" ng-model="vol" >  <button class="control play" ng-click="setVolume(vol)" > Set </button> </br>
+      </br>
+        <button class="control refresh" ng-click="refresh()">RefreshServer</button>
+        </br></br>
+       <label ng-repeat="x in albums" >
+       <input type="radio" name="radio1" value= " {{ $index + 1 }} "> <td>{{ $index + 1 }}  </td> | <td> {{ x }} <td>
+       </br> </label>
+
+
+
+      </div>
+
+</div>
+</body>
+</html>

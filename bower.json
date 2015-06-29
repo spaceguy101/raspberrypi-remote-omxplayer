@@ -1,0 +1,9 @@
+{
+    "name": "node-mplayer-web",
+    "version": "0.0.1",
+    "dependencies": {
+        "angular": "latest",
+        "angular-route": "latest",   
+        "jquery": "latest"
+    }
+}
