@@ -16,16 +16,15 @@ var omx = require('omx-manager'),
 
 
 
-var  songsDir = config.MusicDirectory, songs = []/*Playlist*/, currentSong = 0,dispSongs = [] ,songDuration =[];
-
-(songsDir[songsDir.length-1] !== '/') ? songsDir+'/' : songsDir ;
+var  mediaDir = config.MediaDirectory, songs = []/*Playlist*/, currentSong = 0,dispSongs = [] ,songDuration =[];
 
 
  exec('killall -9 omxplayer.bin');
+ exec('pkill omxplayer');
 //df -h | grep --color=never /dev/sdb  //Get Mounted USB device
 
 
-
+/*
 function getUsbDevice(){
 
 
@@ -36,64 +35,71 @@ function getUsbDevice(){
 	});
 
 }
-
+*/
 
 
 /*
 var mkdirSync = function (path) {
   try {
     fs.mkdirSync(path);
-    console.log( songsDir.red + ' folder created. Plz add Songs to the folder... and restart application'.red);
+    console.log( dir.red + ' folder created. Plz add Songs to the folder... and restart application'.red);
     process.exit(0);
   } catch(e) {
     if ( e.code != 'EEXIST' ) throw e;
   }
 };
 
-mkdirSync(songsDir);
+mkdirSync(dir);
 */
 
-scanDirectory(songsDir);
+mediaDir.forEach(function(dir){
+	(dir[dir.length-1] !== '/') ? scanDirectory(dir+'/') : scanDirectory(dir) ;
 
-function scanDirectory(songsDir){
+	});
+
+
+
+function scanDirectory(dir){
 var files;
 	try{
-	 files = fs.readdirSync(songsDir); // Read all files
+	 files = fs.readdirSync(dir); // Read all files
 	}catch(e){
 		if(e.code === 'ENOENT'){
-			console.log('ERR:'.red + songsDir.red + ' doesnt exist! Plz Enter correct path to MusicDirectory in config.json'.red);
+			console.log('ERR:'.red + dir.red + ' doesnt exist! Plz Enter correct path to MusicDirectory in config.json'.red);
 			process.exit(1);
 		}
 	}
 
-	console.log('\n Searching Song in '.green  + songsDir.yellow + ' folder... \n'.green);
+	console.log('\n Searching Song in '.green  + dir.yellow + ' folder... \n'.green);
 
 	for(var j=0,len= files.length;j<len;j++){
 
-			files[j] = songsDir+files[j];
+			files[j] = dir+files[j];
 			var validateIfMp3 = isMp3(files[j]);
     	//console.log(files[j] + " isMp3 ? : " + validateIfMp3);
-    	if(validateIfMp3) songs.push(files[j]); // Push if file is MP3
+    	if(validateIfMp3) {// Push if file is MP3
+    		songs.push(files[j]); 
+    		dispSongs.push(files[j].replace(dir,'').replace('.mp3',''));
+    	}
 		}
 
 }
 
 function isMp3(mp3Src) { //Validate mp3 file
+	if(/.mp3/.test(mp3Src)){
+
 	var buffer = readChunk.sync(mp3Src, 0, 262);
 	try {
-		return fileType(buffer).ext === 'mp3';
-	}catch(e){
-		return false;
+			return fileType(buffer).ext === 'mp3';
+		}catch(e){
+			return false;
+		}
+
 	}
 }
 
 
 console.log(' ' + songs.length.toString().yellow + ' Songs Found : \n'.green);
-
-	for(var k=0;k<songs.length;k++){
-		
-		dispSongs[k] = songs[k].replace(songsDir,'').replace('.mp3','');
-		}
 
 
 displayPlaylist();
@@ -127,18 +133,17 @@ var getSongDuration = function  (song, callback) {
   });
 };
 
-console.log('Scanning Please wait...'.red);
+console.log('Setting up Playlist in order.. Please wait...'.red);
 setDuration(0);
 
 function setDuration(a){
-
 
 	if(a < songs.length){
 			getSongDuration ( songs[a], function(msec){
 			songDuration[a]=msec -2000;
 			setDuration(a+1);
 		});
-	}else console.log('Scan Completed :)'.red)
+	}else console.log('Finished :)'.red)
 }
 
 
@@ -146,7 +151,8 @@ function continuosPlaybackHandler(){
 
 		if(songDuration[currentSong]){
 			timeOuts.push(setTimeout(function(){
-					playSong(currentSong+1);
+					if(currentSong < songs.length -1) playSong(currentSong+1);
+					else playSong(0);
 					console.log('timoutstop');
 				},songDuration[currentSong]));
 
@@ -350,7 +356,7 @@ function seek(sec){
  app.use(express.static(__dirname + '/public'));                 
 
 
-    app.listen(8081);
+    app.listen(8080);
 
 
     app.get('/play/:song_no', function(req, res) {

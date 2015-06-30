@@ -12,10 +12,10 @@ git clone https://github.com/singham007/raspberrypi-remote-omxplayer.git
 ```
 cd raspberrypi-remote-omxplayer
 ```
-* Open config.json and Enter your Music Directory where songs are stored .
+* Open config.json and Enter your Directory where your media is stored .
 ```
 {
-	"MusicDirectory":""
+	"MusicDirectory":["/path/media/foo","/path/media/bar"]
 }
 ```
 * Run by -
