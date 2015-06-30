@@ -76,11 +76,11 @@ var files;
 
 			files[j] = dir+files[j];
 			var validateIfMp3 = isMp3(files[j]);
-    	//console.log(files[j] + " isMp3 ? : " + validateIfMp3);
+    	
     	if(validateIfMp3) {// Push if file is MP3
     		songs.push(files[j]); 
     		dispSongs.push(files[j].replace(dir,'').replace('.mp3',''));
-    	}
+    		}
 		}
 
 }
@@ -95,7 +95,7 @@ function isMp3(mp3Src) { //Validate mp3 file
 			return false;
 		}
 
-	}
+	}else return false;
 }
 
 

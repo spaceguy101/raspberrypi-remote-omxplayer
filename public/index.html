@@ -42,7 +42,7 @@ font:15px;
       </br>
         <button class="control refresh" ng-click="refresh()">RefreshServer</button>
         </br></br>
-       <label ng-repeat="x in albums" >
+       <label ng-repeat="x in albums track by $index" >
        <input type="radio" name="radio1" value= " {{ $index + 1 }} "> <td>{{ $index + 1 }}  </td> | <td> {{ x }} <td>
        </br> </label>
 
