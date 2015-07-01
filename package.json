@@ -4,7 +4,7 @@
   "description": "Node.js MPlayer Wrapper",
   "main": "player.js",
    "dependencies" 	: {
-   	"omxdirector"	:"latest",
+   	"omx-manager"	:"latest",
     "read-chunk"	: "~1.0.1",
     "file-type"		: "~2.7.0",
     "colors"	  	: "~1.1.2",
