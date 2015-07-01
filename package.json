@@ -1,7 +1,7 @@
 {
   "name": "node-mplayer-web",
   "version": "0.0.1",
-  "description": "Node.js MPlayer Wrapper",
+  "description": "Node.js omxlayer Wrapper",
   "main": "player.js",
    "dependencies" 	: {
    	"omx-manager"	:"latest",
