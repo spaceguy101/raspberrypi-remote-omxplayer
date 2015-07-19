@@ -10,7 +10,7 @@
     $scope.currentSong = 1;
     $http.get('/playlist').success(function(data) {
       $scope.albums = data;
-
+      console.log(data)
        $scope.play= function() {
        	$scope.currentSong = getSelection();
 

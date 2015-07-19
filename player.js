@@ -10,16 +10,16 @@ var omx = require('omx-manager'),
     express  = require('express'),
     cp = require('child_process'),
     exec = cp.exec,
-    app      = express(),
-    path =require('path'),
-    config=require('./config.json');
+    app = express(),
+    path = require('path'),
+    config = require('./config.json');
 
 
 
-var  mediaDir = config.MediaDirectory, songs = []/*Playlist*/, currentSong = 0,dispSongs = [] ,songDuration =[];
+var  mediaDir = config.MediaDirectory , songs = [] /*Playlist*/ , currentSong = 0,dispSongs = [] ,songDuration = [];
 
 
- exec('killall -9 omxplayer.bin');
+ exec('killall -s 9 omxplayer.bin');
  exec('pkill omxplayer');
 //df -h | grep --color=never /dev/sdb  //Get Mounted USB device
 
@@ -53,7 +53,9 @@ mkdirSync(dir);
 */
 
 mediaDir.forEach(function(dir){
-	(dir[dir.length-1] !== '/') ? scanDirectory(dir+'/') : scanDirectory(dir) ;
+
+  if(dir[dir.length-1] !== '/')  scanDirectory(dir+'/') ;
+  else  scanDirectory(dir) ;
 
 	});
 
@@ -76,9 +78,9 @@ var files;
 
 			files[j] = dir+files[j];
 			var validateIfMp3 = isMp3(files[j]);
-    	
+
     	if(validateIfMp3) {// Push if file is MP3
-    		songs.push(files[j]); 
+    		songs.push(files[j]);
     		dispSongs.push(files[j].replace(dir,'').replace('.mp3',''));
     		}
 		}
@@ -100,7 +102,6 @@ function isMp3(mp3Src) { //Validate mp3 file
 
 
 console.log(' ' + songs.length.toString().yellow + ' Songs Found : \n'.green);
-
 
 displayPlaylist();
 
@@ -134,16 +135,17 @@ var getSongDuration = function  (song, callback) {
 };
 
 console.log('Setting up Playlist in order.. Please wait...'.red);
+
 setDuration(0);
 
 function setDuration(a){
 
 	if(a < songs.length){
 			getSongDuration ( songs[a], function(msec){
-			songDuration[a]=msec -2000;
+			songDuration[a]=msec -1000;
 			setDuration(a+1);
 		});
-	}else console.log('Finished :)'.red)
+	}else console.log('Finished :)'.red);
 }
 
 
@@ -151,46 +153,47 @@ function continuosPlaybackHandler(){
 
 		if(songDuration[currentSong]){
 			timeOuts.push(setTimeout(function(){
-					if(currentSong < songs.length -1) playSong(currentSong+1);
-					else playSong(0);
+					if(currentSong < songs.length -1) playSong(currentSong+1,function(a){});
+					else playSong(0,function(a){});
 					console.log('timoutstop');
 				},songDuration[currentSong]));
 
 			console.log('Timeoutset ' + songDuration[currentSong]);
 			clearExtraTimeOuts();
-		}else console.log('ERR : Duration of song not found')
+		}else console.log('ERR : Duration of song not found');
 
 }
 
 
 function clearExtraTimeOuts(){
+
 	if(timeOuts.length > 1){
-		clearTimeout(timeOuts.pop());
+
+		clearTimeout(timeOuts.shift());
+
 		console.log('extracleared');
+
 		clearExtraTimeOuts();
-		}
+  }else return;
+
 	}
 
 
- 
 
 omx.stop();
 var timeOuts = []; // To handle Timeout intervals at end of song
 
 
-function playSong(i) { // Play song of index currentSong from songs[]
+function playSong (i,callback) { // Play song of index currentSong from songs[]
 
 	if(timeOuts[0]) {
-		clearTimeout(timeOuts[0]);
-		timeOuts.pop();
+		clearTimeout(timeOuts.pop());
 		console.log('cleared');
 	}
 
-
-
 	if(currentSong<0 || currentSong>songs.length-1 ) {
 		console.log('ERR: Plz enter valid song number'.red);
-		return false;
+		callback(false);
 	}else{
 		currentSong = i;
 	}
@@ -203,26 +206,22 @@ function playSong(i) { // Play song of index currentSong from songs[]
 		console.log('Now Playing: '.red + dispSongs[currentSong].yellow);
 
 		continuosPlaybackHandler();
-		
+
 	}
 
 
 	omx.once('songended', function(){
-		
 
 		omx.play(songs[currentSong]);
 		continuosPlaybackHandler();
 
-
 		console.log('end');
 		console.log('Now Playing: '.red + dispSongs[currentSong].yellow);
 
-		
+
 	});
 
-return true;
-
-
+ callback(true);
 
 
 }
@@ -302,14 +301,14 @@ function play(line){
 	if(line) {
 		try {
 
-			playSong(parseInt(line) - 1 );
+			playSong(parseInt(line) - 1,function(a){});
 			//currentSong =parseInt(line) - 1 ;
 		}catch(e){
 
 			console.log('ERR : play argument should be INT'.red);
-			playSong(0);
+			playSong(0,function(a){});
 		}
-	}else playSong(0);
+	}else playSong(0,function(a){});
 
 }
 
@@ -317,10 +316,10 @@ function prev(){
 
 
 	if(currentSong > 0) {
-		playSong(currentSong-1);
+		playSong(currentSong-1,function(a){});
 
 	}else{
-		playSong(songs.length -1);
+		playSong(songs.length -1,function(a){});
 
 	}
 
@@ -330,8 +329,8 @@ function prev(){
 function next(){
 
 
-	if(currentSong < songs.length -1 ) playSong(currentSong+1);
-	else playSong(0);
+	if(currentSong < songs.length -1 ) playSong(currentSong+1,function(a){});
+	else playSong(0,function(a){});
 
 }
 
@@ -346,14 +345,11 @@ function setVolume(volume){
 
 function seek(sec){
 
-
-
-
 }
 /////////////// Express ////////////
 
 
- app.use(express.static(__dirname + '/public'));                 
+ app.use(express.static(__dirname + '/public'));
 
 
     app.listen(8080);
@@ -362,14 +358,25 @@ function seek(sec){
     app.get('/play/:song_no', function(req, res) {
 
 
-    	if(playSong(req.params.song_no - 1)) res.send(JSON.stringify({'song':currentSong+1 , 'action':'play'}));
-          else res.send(JSON.stringify({'song':currentSong+1 , 'action':'err'}));
+    	playSong(req.params.song_no - 1,function(a){
+        if(a) res.send(JSON.stringify({'song':currentSong+1 , 'action':'play'}));
+            else res.send(JSON.stringify({'song':currentSong+1 , 'action':'err'}));
+      });
+
     });
 
 
-
+    var pause1 = false;
     app.get('/pause', function(req, res) {
-     	pause();
+
+     	if(pause1) {
+        pause1 = false;
+        resume();
+      }else {
+        pause1 = true;
+        pause();
+      }
+
      	res.send(JSON.stringify({'song':currentSong+1 , 'action':'pause'}));
     });
 
@@ -380,6 +387,7 @@ function seek(sec){
      	res.send(JSON.stringify({'song':currentSong+1 , 'action':'stop'}));
     });
 
+var currentVol;
     app.get('/setvolume/:vol', function(req, res) {
      	  setVolume(req.params.vol);
      	   res.send(JSON.stringify({'song':currentSong+1 , 'action':'setvolume'}));
@@ -399,10 +407,13 @@ function seek(sec){
 
     app.get('/refresh', function(req, res) {
         omx.stop();
-        exec('killall -9 omxplayer.bin',function (error, stdout, stderr) {
+        exec('killall -s 9 omxplayer.bin',function (error, stdout, stderr) {
           if (error !== null) {
             console.log('exec error: ' + error);
           }
+
+          playSong(currentSong,function(a){});
+
             res.send(JSON.stringify({'song':currentSong+1 , 'action':'refresh'}));
           });
         });
