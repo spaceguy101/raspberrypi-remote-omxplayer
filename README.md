@@ -6,7 +6,7 @@ sudo apt-get install omxplayer
 ```
 * Clone this repository
 ```
-git clone https://github.com/singham007/raspberrypi-remote-omxplayer.git
+git clone https://github.com/spaceguy101/raspberrypi-remote-omxplayer.git
 ```
 * Change Directory to repository 
 ```
@@ -21,4 +21,8 @@ cd raspberrypi-remote-omxplayer
 * Run by -
 ```
 node player.js
+```
+* Once the server has started,You can access the Web Interface at port `8080`
+```
+http://[hostname-raspberryPi]:8080
 ```
